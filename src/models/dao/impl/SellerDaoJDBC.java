@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,40 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public void insert(Seller obj) {
-		// TODO Auto-generated method stub
+		PreparedStatement pst = null;
+		
+		try {
+			String query = "INSERT INTO seller "
+					+ "(Name, Email, BirthDate, BaseSalary, DepartmentId) "
+					+ "VALUES "
+					+ "(?, ?, ?, ?, ?)";
+			pst = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+			pst.setString(1, obj.getName());
+			pst.setString(2, obj.getEmail());
+			pst.setDate(3, new java.sql.Date(obj.getBirthDate().getTime()));
+			pst.setDouble(4, obj.getBaseSalary());
+			pst.setInt(5, obj.getDepartment().getId());
+			
+			int rowsAffected = pst.executeUpdate();
+			
+			if(rowsAffected > 0) {
+				ResultSet rs = pst.getGeneratedKeys();
+				if(rs.next()) {
+					int id = rs.getInt(1);
+					obj.setId(id);
+				}		
+				DB.closeResultSet(rs);
+			}
+			else {
+				throw new DbException("Erro desconhecido!Nenhuma coluna afetada.");
+			}
+		}
+		catch(SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closePreparedStatement(pst);
+		}
 
 	}
 
